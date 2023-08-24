@@ -1,12 +1,18 @@
-# Algorithms for EO data in PyTorch
+# SimCLR in PyTorch
 
 ## Description
 
-The repository contains PyTorch implementations of SimCLR
-to use on earth observation data from the BigEarthNet dataset/benchmark
-for multi-label classification.
+The repository contains PyTorch implementation of SimCLR.
 
-It also contains an implementation of VQ-VAE, to use on the same dataset.
+It is adapted to be used on earth observation data
+from the BigEarthNet dataset/benchmark,
+with __multilabel__ classification as downstream task
+(whether with a linear probe or finetuning). 
+The repository also offers an implementation of a classifier
+for the same multilabel classification task as a standalone task,
+so that a direct comparison with the outcome of SimCLR's downstream
+task is easily and directly obtainable.
+
 
 There is one script to run the job locally (`anton_launcher`)
 and one adapted for Slurm-orchestrated HPC clusters (`slurm_launcher`).

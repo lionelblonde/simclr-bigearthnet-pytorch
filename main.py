@@ -10,7 +10,6 @@ from helpers.argparser_util import agg_argparser
 from helpers.experiment import ExperimentInitializer
 from algos.classification.classifier import Classifier
 from algos.ssl.simclr import SimCLR
-from algos.compression.compressor import Compressor
 
 
 def run(args):
@@ -61,11 +60,6 @@ def run(args):
         num_transforms = 2
         with_labels = True
         knn_eval = True
-    elif args.algo_handle == 'compressor':
-        algo_class_handle = Compressor
-        num_transforms = 1
-        with_labels = False
-        knn_eval = False
     else:
         raise NotImplementedError("algorithm not covered")
 

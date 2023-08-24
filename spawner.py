@@ -184,25 +184,6 @@ class Spawner(object):
             })
             if 'load_checkpoint' in self.config:
                 hpmap.update({'load_checkpoint': self.load_checkpoint})
-        elif algo_handle == 'compressor':
-            hpmap.update({
-                # training
-                'max_lr': self.config['max_lr'],
-                # model architecture
-                'in_channels': self.config['in_channels'],
-                'z_channels': self.config['z_channels'],
-                'ae_hidden': self.config['ae_hidden'],
-                'ae_resblocks': self.config['ae_resblocks'],
-                'ae_kernel': self.config['ae_kernel'],
-                'dsf': self.config['dsf'],
-                # loss
-                'alpha': self.config['alpha'],
-                'beta': self.config['beta'],
-                # centers
-                'c_num': self.config['c_num'],
-                'c_min': self.config['c_min'],
-                'c_max': self.config['c_max'],
-            })
         else:
             raise ValueError(f"invalid algo handle: {algo_handle}!")
 
