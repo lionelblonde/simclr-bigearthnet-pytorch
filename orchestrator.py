@@ -68,7 +68,11 @@ def learn(
             # Log stats about the dataloaders
             ds_len = e.dataset_length
             dl_len = len(e)
-            logger.info(f"dataloader {i} {ds_len = } | {dl_len = }")
+            logger.info(
+                f"DATALOADER#{i} -|-"
+                f"SETLEN={str(ds_len).zfill(7)} -|-"
+                f"DLDLEN={str(dl_len).zfill(7)}"
+            )
 
         if args.linear_probe or args.fine_tuning:
             dataloaders_2 = []
@@ -98,7 +102,11 @@ def learn(
                 # Log stats about the dataloaders
                 ds_len = e.dataset_length
                 dl_len = len(e)
-                logger.info(f"dataloader {i} {ds_len = } | {dl_len = }")
+                logger.info(
+                    f"DATALOADER#{i} -|-"
+                    f"SETLEN={str(ds_len).zfill(7)} -|-"
+                    f"DLDLEN={str(dl_len).zfill(7)}"
+                )
 
     # Create an algorithm
     algo = algo_wrapper()
@@ -107,7 +115,7 @@ def learn(
 
     # Set up model save directory
     ckpt_dir = Path(args.checkpoint_dir) / experiment_name
-    Path.mkdir(ckpt_dir, exist_ok=True)
+    Path(ckpt_dir).mkdir(parents=True, exist_ok=True)
     # Save the model as a dry run, to avoid bad surprises at the end
     algo.save_to_path(ckpt_dir, xtra="dryrun")
     logger.info(f"dry run. Saving model @: {ckpt_dir}")
@@ -207,4 +215,3 @@ def learn(
             algo.test(dataloaders[2], dataloaders[3])
         else:
             algo.test(dataloaders[2])
-
