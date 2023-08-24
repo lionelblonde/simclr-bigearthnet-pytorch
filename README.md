@@ -2,7 +2,7 @@
 
 ## Description
 
-The repository contains PyTorch implementation of SimCLR.
+The repository contains PyTorch implementation of the SimCLR self-supervised learning method.
 
 It is adapted to be used on earth observation data
 from the BigEarthNet dataset/benchmark,
