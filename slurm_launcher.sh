@@ -2,7 +2,7 @@
 
 # export DATASET_DIR=/srv/beegfs/scratch/shares/dmml/eo4eu/datasets
 export DATASET_DIR=/share/users/${USER:0:1}/${USER}
-export MODEL_DIR=/home/users/b/blondeli/Code/geo-pytorch/data/checkpoints/sheepa_sashu_soosu.gitSHA_a9a0107.simclr_1.seed00
+export MODEL_DIR=./weights/SimCLR_ResNet101_h128_o64
 # the latter var is not always used but need be here for some configs
 
 python spawner.py \

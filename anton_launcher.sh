@@ -17,7 +17,7 @@ python main.py \
     --no-linear_probe \
     --no-fine_tuning \
     --fc_hid_dim 128 \
-    --backbone resnet18 \
+    --backbone resnet101 \
     --no-pretrained_w_imagenet \
     --fc_hid_dim 128 \
     --ftop_epochs 0 \
@@ -26,4 +26,4 @@ python main.py \
     --truncate_at 100 \
     --acc_grad_steps 8 \
     --num_workers 4 #\
-    #--load_checkpoint /hdd/models/SIMCLR_MODELS/phupu_weerer_ceeree-simclr-3epochs/model_3_done.tar
+    #--load_checkpoint ./weights/SimCLR_ResNet101_h128_o64/model_10epochs.tar

@@ -42,7 +42,7 @@ ntx_temp: 0.07
 
 # fine-tuning or linear probing
 num_classes: 19
-load_checkpoint: 'model_10_done.tar'
+load_checkpoint: 'model_10epochs.tar'
 linear_probe: true
 fine_tuning: false
 ftop_epochs: 10
