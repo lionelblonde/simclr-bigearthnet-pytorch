@@ -8,4 +8,5 @@ RUN pip install numpy
 RUN pip install wandb
 RUN pip install tmuxp
 RUN pip install tabulate
+RUN pip install onnx
 RUN apt-get update && apt-get install ffmpeg libsm6 libxext6 tmux git -y
