@@ -215,3 +215,4 @@ tmux/
 splits/
 wandb/
 weights/
+*.png
