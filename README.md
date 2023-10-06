@@ -29,13 +29,17 @@ The choices I made here were for my own convenience.
 
 Python >=3.10
 
-Install the following packages in your Python environment:
-+ opencv (opencv-python if using pip)
-+ tqdm
-+ rasterio
-+ numpy
-+ scikit-learn
-+ pytorch, torchvision (pure CPU)
-+ pytorch torchvision pytorch-cuda=11.8 -c pytorch -c nvidia (GPU support)
-+ wandb
-+ tmuxp (pip) (not needed on hpc clusters)
+Set up your Python environment as follows (prefered way; Dockerfile provided too):
+```bash
+conda install -c conda-forge gdal
+pip install --upgrade pip
+pip install rasterio
+pip install opencv-python
+pip install tqdm
+pip install numpy
+pip install scikit-learn
+pip install wandb
+pip install tmuxp
+pip install tabulate
+pip install torch torchvision torchaudio
+```
