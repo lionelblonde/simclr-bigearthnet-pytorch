@@ -1,6 +1,5 @@
-import os
 import sys
-import os.path as osp
+from pathlib import Path
 import tempfile
 import json
 import datetime
@@ -16,24 +15,31 @@ DISABLED = 50
 
 
 class KVWriter(object):
+
     def writekvs(self, kvs):
         raise NotImplementedError
 
 
 class SeqWriter(object):
+
     def writeseq(self, seq):
         raise NotImplementedError
 
 
 class HumanOutputFormat(KVWriter, SeqWriter):
-    def __init__(self, filename_or_file):
-        if isinstance(filename_or_file, str):
-            self.file = open(filename_or_file, 'wt')
+
+    def __init__(self, path_or_textiofilething):
+        self.file = path_or_textiofilething
+        if isinstance(path_or_textiofilething, Path):
+            self.write_fn = self.file.write_text
             self.own_file = True
-        else:
-            fmtstr = "expected file or str, got {}".format(filename_or_file)
-            assert hasattr(filename_or_file, 'read'), fmtstr
-            self.file = filename_or_file
+        else:  # must be a textiofilething or assert error
+            assert_msg = (
+                f"invalid type, got {type(self.file)};"
+                "must at least have a 'write' method"
+            )
+            assert hasattr(self.file, 'write'), assert_msg
+            self.write_fn = self.file.write
             self.own_file = False
 
     def writekvs(self, kvs):
@@ -41,14 +47,14 @@ class HumanOutputFormat(KVWriter, SeqWriter):
         key2str = {}
         for (key, val) in kvs.items():
             if isinstance(val, float):
-                valstr = '%-8.3g' % (val,)
+                valstr = f"{val:<8.3g}"
             else:
                 valstr = str(val)
             key2str[self._truncate(key)] = self._truncate(valstr)
 
         # Find max widths
         if len(key2str) == 0:
-            print('WARNING: tried to write empty key-value dict')
+            # empty key-value dict; not sending warning nor stopping
             return
         else:
             keywidth = max(map(len, key2str.keys()))
@@ -58,47 +64,38 @@ class HumanOutputFormat(KVWriter, SeqWriter):
         dashes = '-' * (keywidth + valwidth + 7)
         lines = [dashes]
         for (key, val) in key2str.items():
-            lines.append("| {}{} | {}{} |".format(key, ' ' * (keywidth - len(key)),
-                                                  val, ' ' * (valwidth - len(val))))
+            key_space = ' ' * (keywidth - len(key))
+            val_space = ' ' * (valwidth - len(val))
+            lines.append(f"| {key}{key_space} | {val}{val_space} |")
         lines.append(dashes)
-        self.file.write('\n'.join(lines) + '\n')
-
-        # Flush the output to the file
-        self.file.flush()
+        self.write_fn('\n'.join(lines) + '\n')
 
     def _truncate(self, s):
         return s[:40] + '...' if len(s) > 43 else s
 
     def writeseq(self, seq):
         for arg in seq:
-            self.file.write(arg)
-        self.file.write('\n')
-        self.file.flush()
-
-    def close(self):
-        if self.own_file:
-            self.file.close()
+            self.write_fn(arg)
+        self.write_fn('\n')
 
 
 class JSONOutputFormat(KVWriter):
-    def __init__(self, filename):
-        self.file = open(filename, 'wt')
+
+    def __init__(self, path):
+        self.file = path
 
     def writekvs(self, kvs):
         for k, v in kvs.items():
             if hasattr(v, 'dtype'):
                 v = v.tolist()
                 kvs[k] = float(v)
-        self.file.write(json.dumps(kvs) + '\n')
-        self.file.flush()
-
-    def close(self):
-        self.file.close()
+        self.file.write_text(json.dumps(kvs), newline='\n')
 
 
 class CSVOutputFormat(KVWriter):
-    def __init__(self, filename):
-        self.file = open(filename, 'w+t')
+
+    def __init__(self, path):
+        self.file = path
         self.keys = []
         self.sep = ','
 
@@ -107,50 +104,47 @@ class CSVOutputFormat(KVWriter):
         extra_keys = kvs.keys() - self.keys
         if extra_keys:
             self.keys.extend(extra_keys)
-            self.file.seek(0)
-            lines = self.file.readlines()
-            self.file.seek(0)
+            with self.file.open() as f:
+                lines = f.readlines()
             for (i, k) in enumerate(self.keys):
                 if i > 0:
-                    self.file.write(',')
-                self.file.write(k)
+                    self.file.write_text(',')
+                self.file.write_text(k)
             self.file.write('\n')
             for line in lines[1:]:
-                self.file.write(line[:-1])
-                self.file.write(self.sep * len(extra_keys))
-                self.file.write('\n')
+                self.file.write_text(line[:-1])
+                self.file.write_text(self.sep * len(extra_keys))
+                self.file.write_text('', newline='\n')
         for (i, k) in enumerate(self.keys):
             if i > 0:
-                self.file.write(',')
+                self.file.write_text(',')
             v = kvs.get(k)
             if v:
-                self.file.write(str(v))
-        self.file.write('\n')
-        self.file.flush()
-
-    def close(self):
-        self.file.close()
+                self.file.write_text(str(v))
+        self.file.write_text('', newline='\n')
 
 
-def make_output_format(format, ev_dir, suffix=''):
-    os.makedirs(ev_dir, exist_ok=True)
-    if format == 'stdout':
-        return HumanOutputFormat(sys.stdout)
-    elif format == 'log':
-        return HumanOutputFormat(osp.join(ev_dir, "log{}.txt".format(suffix)))
-    elif format == 'json':
-        return JSONOutputFormat(osp.join(ev_dir, "progress{}.json".format(suffix)))
-    elif format == 'csv':
-        return CSVOutputFormat(osp.join(ev_dir, "progress{}.csv".format(suffix)))
-    else:
-        raise ValueError("unknown format specified: {}".format(format))
+def make_output_format(formatting, dir_, suffix=''):
+    dir_ = Path(dir_)
+    dir_.mkdir(parents=True, exist_ok=True)
+    match formatting:  # python version >3.10 needed
+        case 'stdout':
+            return HumanOutputFormat(sys.stdout)
+        case 'log':
+            return HumanOutputFormat(dir_ / f"log{suffix}.txt")
+        case 'json':
+            return JSONOutputFormat(dir_ / f"progress{suffix}.json")
+        case 'csv':
+            return CSVOutputFormat(dir_ / f"progress{suffix}.csv")
+        case _:
+            raise ValueError(f"unknown formatting specified: {formatting}")
 
 
 # Frontend
 
 def logkv(key, val):
-    """Log a key-value pair with the current logger. This method
-    should be called every iteration for the quantities to monitor.
+    """Log a key-value pair with the current logger.
+    This method should be called every iteration for the quantities to monitor.
     """
     Logger.CURRENT.logkv(key, val)
 
@@ -163,7 +157,7 @@ def logkvs(d):
 
 def dumpkvs():
     """Write all the key-values pairs accumulated in the logger
-    to the write ouput format(s), then flush the dictionary.
+    to the write ouput format(s) (then flush the dictionary.
     """
     Logger.CURRENT.dumpkvs()
 
@@ -173,7 +167,7 @@ def getkvs():
     return Logger.CURRENT.name2val
 
 
-def log(*args, level=INFO):  # noqa
+def log(*args, level=INFO):
     """Write the sequence of args, with no separators, to the console
     and output files (if an output file has been configured).
     """
@@ -249,10 +243,6 @@ class Logger(object):
     def get_dir(self):
         return self.dir_
 
-    def close(self):
-        for output_format in self.output_formats:
-            output_format.close()
-
     def _log(self, args):
         for output_format in self.output_formats:
             if isinstance(output_format, SeqWriter):
@@ -260,13 +250,15 @@ class Logger(object):
 
 
 def configure(dir_=None, format_strs=None):
-    """Configure logger"""
+    """Configure logger (called in configure_default_logger)"""
     if dir_ is None:
-        dir_ = osp.join(tempfile.gettempdir(),
-                        datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f_temp_log"))
-    assert isinstance(dir_, str), "wrong type: {}".format(type(dir_))
-    # Make sure the provided directory exists
-    os.makedirs(dir_, exist_ok=True)
+        dir_ = Path(tempfile.gettempdir())
+        dir_ /= datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f_temp_log")
+    else:
+        # Make sure the directory is provided as a string
+        assert isinstance(dir_, str), f"wrong type: {type(dir_)} > must be str"
+        # Make sure the provided directory exists
+        Path(dir_).mkdir(parents=True, exist_ok=True)
     if format_strs is None:
         format_strs = []
     # Setup the output formats
@@ -279,7 +271,7 @@ def configure_default_logger():
     # Write to stdout by default
     format_strs = ['stdout']
     # Configure the current logger
-    configure(format_strs=format_strs)
+    configure(format_strs=format_strs)  # makes Logger.CURRENT be not None anymore
     # Logging successful configuration of default logger
     log("configuring default logger for each worker (logging to stdout only by default)")
     # Define the default logger with the current logger
@@ -288,9 +280,9 @@ def configure_default_logger():
 
 def reset():
     if Logger.CURRENT is not Logger.DEFAULT:
-        Logger.CURRENT.close()
         Logger.CURRENT = Logger.DEFAULT
         log('resetting logger')
 
 
+# Configure a logger by default
 configure_default_logger()
