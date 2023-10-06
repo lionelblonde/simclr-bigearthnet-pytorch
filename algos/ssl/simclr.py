@@ -50,6 +50,7 @@ class SimCLR(object):
         ).to(self.device)
 
         self.criterion = NTXentLoss(temperature=self.hps.ntx_temp).to(self.device)
+
         self.sim = nn.CosineSimilarity(dim=2).to(self.device)
         self.bce = nn.BCEWithLogitsLoss().to(self.device)
 
@@ -565,4 +566,3 @@ class SimCLR(object):
         else:  # send a warning in case flagging use to False is an oversight
             if 'sched_state_dict' in checkpoint:
                 logger.warn("there was a sched in checkpoint, but you want none")
-

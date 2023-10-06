@@ -101,7 +101,7 @@ def agg_argparser():
     # algo
     parser.add_argument(
         "--algo_handle", type=str,
-        choices=['classifier', 'simclr', 'compressor'],
+        choices=['classifier', 'simclr'],
         default=None,
     )
 

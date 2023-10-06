@@ -200,6 +200,9 @@ def learn(
 
             algo.ftop_train(dataloaders_2[0], dataloaders_2[1])
 
+            if algo.epochs_so_far % args.save_freq == 0:
+                algo.save_to_path(ckpt_dir, xtra="with_new_head")
+
         logger.info("testing")
         algo.ftop_test(dataloaders_2[2])
 

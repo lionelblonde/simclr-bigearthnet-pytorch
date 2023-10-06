@@ -10,7 +10,7 @@ python spawner.py \
     --conda_env geocuda \
     --deployment slurm \
     --num_seeds 1 \
-    --caliber long \
+    --caliber veryverylong \
     --deploy_now \
     --no-sweep \
     --no-wandb_upgrade \

@@ -370,15 +370,24 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Job Spawner")
     parser.add_argument('--config', type=str, default=None)
     parser.add_argument('--conda_env', type=str, default=None)
-    parser.add_argument('--deployment', type=str, choices=['tmux', 'slurm'], default='tmux', help='deploy how?')
+    parser.add_argument('--deployment', type=str,
+        choices=['tmux', 'slurm'],
+        default='tmux',
+        help='deploy how?',
+    )
     parser.add_argument('--num_seeds', type=int, default=None)
-    parser.add_argument('--caliber', type=str, choices=['short', 'long', 'verylong', 'veryverylong'], default='short')
+    parser.add_argument('--caliber', type=str, choices=[
+        'short', 'long', 'verylong', 'veryverylong', 'veryveryverylong'
+    ], default='short')
     boolean_flag(parser, 'deploy_now', default=True, help="deploy immediately?")
     boolean_flag(parser, 'sweep', default=False, help="hp search?")
     boolean_flag(parser, 'wandb_upgrade', default=True, help="upgrade wandb?")
     boolean_flag(parser, 'wandb_dryrun', default=True, help="toggle wandb offline mode")
     boolean_flag(parser, 'debug', default=False, help="toggle debug/verbose mode in spawner")
-    parser.add_argument('--debug_lvl', type=int, default=0, help="set the debug level for the spawned runs")
+    parser.add_argument('--debug_lvl', type=int,
+        default=0,
+        help="set the debug level for the spawned runs",
+    )
     boolean_flag(parser, 'quick', default=False, help="make it quick (no scratch dataset copy)")
     args = parser.parse_args()
 

@@ -23,7 +23,15 @@ test_results = {
             'subset_accuracy': 0.1756,
             'balanced_accuracy': 0.7111,
         },
-        'finetune': {},  # TODO
+        'finetune': {
+            'recall': 0.3757,
+            'precision': 0.6947,
+            'f1': 0.4877,
+            'f2': 0.4137,
+            'accuracy': 0.8802,
+            'subset_accuracy': 0.1704,
+            'balanced_accuracy': 0.6731,
+        },
     },
     '1.0': {
         'classifier': {
@@ -44,7 +52,15 @@ test_results = {
             'subset_accuracy': 0.2145,
             'balanced_accuracy': 0.7445,
         },
-        'finetune': {},  # TODO
+        'finetune': {
+            'recall': 0.5222,
+            'precision': 0.7031,
+            'f1': 0.5993,
+            'f2': 0.5505,
+            'accuracy': 0.894,
+            'subset_accuracy': 0.2172,
+            'balanced_accuracy': 0.7414,
+        },
     },
     '10.0': {
         'classifier': {
@@ -65,16 +81,31 @@ test_results = {
             'subset_accuracy': 0.2446,
             'balanced_accuracy': 0.7639,
         },
-        'finetune': {},  # TODO
+        'finetune': {
+            'recall': 0.5558,
+            'precision': 0.7538,
+            'f1': 0.6398,
+            'f2': 0.5866,
+            'accuracy': 0.905,
+            'subset_accuracy': 0.2449,
+            'balanced_accuracy': 0.7616,
+        },
     },
 }
 ms = ['recall', 'precision', 'f1',  # 'f2' can be ignored
       'accuracy', 'subset_accuracy', 'balanced_accuracy']
-cs = ['classifier', 'probe']  # pending: finetune
+cs = ['classifier', 'probe', 'finetune']
+colors = {
+    'classifier': 'lightcoral',
+    'probe': "springgreen",
+    'finetune': "deepskyblue",
+}
+assert list(colors.keys()) == cs, "mismatching keys"
 labels = [
     'Classifier (entirely trainable)',
     'SimCLR Frozen Trunk + Linear Trainable Head ("linear probe")',
-]  # pending: 'SimCLR Trainable Trunk + Linear Trainable Head ("fine-tuning")'
+    'SimCLR Trainable Trunk + Linear Trainable Head ("fine-tuning")',
+]
 n_rows, n_cols, unit_size = 2, 3, 5  # hps, careful
 fig, axs = plt.subplots(
     n_rows, n_cols,
@@ -99,6 +130,7 @@ for c in cs:
              for k in test_results.keys()],
             marker='X',
             markersize=12,
+            color=colors[c],
         )
         if k == 0:
             lines.append(line)  # for the legend
@@ -132,6 +164,7 @@ for k, p in enumerate(test_results.keys()):
              for m in ms],
             width,
             label=label,
+            color=colors[c],
         )
         if k == 0:
             lines.append(line)  # for the legend
