@@ -241,7 +241,7 @@ class Spawner(object):
             # Sometimes versions are needed (some clusters)
             if self.config['cuda']:
                 constraint = ""
-                bash_script_str += ("#SBATCH --gpus=titan:1\n")
+                bash_script_str += ("#SBATCH --gpus=1\n")  # gpus=titan:1 if needed
                 if constraint != "":
                     bash_script_str += (f'#SBATCH --constraint="{constraint}"\n')
             bash_script_str += ('\n')
