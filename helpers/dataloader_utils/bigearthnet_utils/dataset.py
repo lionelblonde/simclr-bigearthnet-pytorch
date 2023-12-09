@@ -239,4 +239,3 @@ class BigEarthNetDataset(Dataset):
             return (output, labels_for_output)
         else:
             return output
-
