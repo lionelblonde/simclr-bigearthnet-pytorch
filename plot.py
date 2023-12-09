@@ -92,6 +92,17 @@ test_results = {
         },
     },
 }
+
+classifier100 = {
+    'recall': 0.7407,
+    'precision': 0.79,
+    'f1': 0.7646,
+    'f2': 0.7501,
+    'accuracy': 0.9304,
+    'subset_accuracy': 0.3256,
+    'balanced_accuracy': 0.8526,
+}
+
 ms = ['recall', 'precision', 'f1',  # 'f2' can be ignored
       'accuracy', 'subset_accuracy', 'balanced_accuracy']
 cs = ['classifier', 'probe', 'finetune']
@@ -102,7 +113,7 @@ colors = {
 }
 assert list(colors.keys()) == cs, "mismatching keys"
 labels = [
-    'Classifier (entirely trainable)',
+    'Classifier',
     'SimCLR Frozen Trunk + Linear Trainable Head ("linear probe")',
     'SimCLR Trainable Trunk + Linear Trainable Head ("fine-tuning")',
 ]
@@ -114,6 +125,7 @@ fig, axs = plt.subplots(
 )  # everything in one figure
 percs = [float(k) for k in test_results.keys()]
 lines = []  # will contain what's needed in the legend
+hline_flag = True
 for c in cs:
     i, j = 0, 0
     for k, m in enumerate(ms):
@@ -124,6 +136,12 @@ for c in cs:
         axs[i, j].set_xlabel("percentage of labels available")
         axs[i, j].set_ylabel(m.replace('_', ' '))
         axs[i, j].set_yticks(np.arange(0., 1., 0.1))
+
+        line = axs[i, j].axhline(y=classifier100[m], color='grey')
+        if k == 0 and hline_flag:
+            lines.append(line)
+            hline_flag = False
+
         line, = axs[i, j].plot(
             percs,
             [test_results[k][c][m]
@@ -142,7 +160,7 @@ for c in cs:
             else:
                 break
 # handle the legend
-fig.legend(lines, labels)
+fig.legend(lines, ['Classifier trained on every labelled pair', *labels])
 fig.savefig("res.png")
 
 # ok now we make one figure per percentage
@@ -177,4 +195,3 @@ for k, p in enumerate(test_results.keys()):
     axs[k].grid(axis='y')  # easier to see the values
 fig.legend(lines, labels, prop={'size': 12})
 fig.savefig("res-bars.png")
-
