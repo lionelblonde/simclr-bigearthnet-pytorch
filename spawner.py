@@ -282,7 +282,9 @@ def run(args):
     if args.wandb_upgrade:
         # Upgrade the wandb package
         logger.info(">>>>>>>>>>>>>>>>>>>> Upgrading wandb pip package")
-        out = subprocess.check_output([sys.executable, '-m', 'pip', 'install', 'wandb', '--upgrade'])
+        out = subprocess.check_output([
+            sys.executable, '-m', 'pip', 'install', 'wandb', '--upgrade'
+        ])
         logger.info(out.decode("utf-8"))
 
     # Create a spawner object
@@ -350,7 +352,9 @@ def run(args):
                       'focus': False,
                       'panes': [pane]}
             yaml_content['windows'].append(window)
-            logger.info(f"job#={i},name={name} -> will run in tmux, session={session_name},window={i}.")
+            logger.info(
+                f"job#={i},name={name} -> will run in tmux, session={session_name},window={i}."
+            )
         # Dump the assembled tmux config into a yaml file
         job_config = Path(tmux_dir) / f"{session_name}.yaml"
         job_config.write_text(yaml.dump(yaml_content, default_flow_style=False))
@@ -393,7 +397,8 @@ if __name__ == "__main__":
 
     if args.wandb_dryrun:
         # Run wandb in offline mode (does not sync with wandb servers in real time,
-        # use `wandb sync` later on the local directory in `wandb/` to sync to the wandb cloud hosted app)
+        # use `wandb sync` later on the local directory in `wandb/`
+        # to sync to the wandb cloud hosted app)
         os.environ["WANDB_MODE"] = "dryrun"
 
     # Set the debug level for the spawned runs
