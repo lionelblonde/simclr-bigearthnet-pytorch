@@ -1,4 +1,5 @@
 import os
+
 from pathlib import Path
 
 import torch
@@ -13,6 +14,10 @@ from algos.ssl.simclr import SimCLR
 
 
 def run(args):
+
+    # Solve issue with dataloader
+    os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ["MKL_NUM_THREADS"] = "1"
 
     # Initialize and configure experiment
     experiment = ExperimentInitializer(args)
@@ -59,7 +64,7 @@ def run(args):
         algo_class_handle = SimCLR
         num_transforms = 2
         with_labels = True
-        knn_eval = True
+        knn_eval = False  # takes time
     else:
         raise NotImplementedError("algorithm not covered")
 

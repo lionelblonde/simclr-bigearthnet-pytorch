@@ -188,8 +188,10 @@ class SimCLR(object):
                     y_bank = []
 
                     logger.info("building bank")
+                    num_classes = 0  # to prevent unboundedness
                     for j, (k_x, k_true_y) in enumerate(knn_dataloader):
                         if j >= 10:
+                            num_classes = k_true_y.size(-1)  # using the last label loaded
                             break  # takes too long otherwise; shuffle is on
                         if self.hps.cuda:
                             k_x = k_x.pin_memory().to(self.device, non_blocking=True)
@@ -200,7 +202,6 @@ class SimCLR(object):
                         z_bank.append(k_z)
                         y_bank.append(k_true_y)
                     logger.info("bank built")
-                    num_classes = k_true_y.size(-1)  # using the last label loaded
                     z_bank = torch.cat(z_bank, dim=0).to(self.device)  # size: (NxD)
                     y_bank = torch.cat(y_bank, dim=0).to(self.device)  # size: (NxC)
 
@@ -256,8 +257,10 @@ class SimCLR(object):
             y_bank = []
 
             logger.info("building bank")  # compared to val, only need to build once
+            num_classes = 0  # to prevent unboundedness
             for j, (k_x, k_true_y) in enumerate(knn_dataloader):
                 if j >= 10:
+                    num_classes = k_true_y.size(-1)  # using the last label loaded
                     break  # takes too long otherwise; shuffle is on
                 if self.hps.cuda:
                     k_x = k_x.pin_memory().to(self.device, non_blocking=True)
@@ -268,7 +271,6 @@ class SimCLR(object):
                 z_bank.append(k_z)
                 y_bank.append(k_true_y)
             logger.info("bank built")
-            num_classes = k_true_y.size(-1)  # using the last label loaded
             z_bank = torch.cat(z_bank, dim=0).to(self.device)  # size: (NxD)
             y_bank = torch.cat(y_bank, dim=0).to(self.device)  # size: (NxC)
 

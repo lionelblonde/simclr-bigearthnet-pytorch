@@ -74,8 +74,8 @@ def learn(
                 f"DLDLEN={str(dl_len).zfill(7)}"
             )
 
+        dataloaders_2 = []  # to avoid unboundedness
         if args.linear_probe or args.fine_tuning:
-            dataloaders_2 = []
             tmpdict = {
                 "num_classes": args.num_classes,
                 "seed": args.seed,
