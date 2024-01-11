@@ -13,7 +13,7 @@ python main.py \
     --lr 1e-3 \
     --wd 0 \
     --clip_norm 0 \
-    --algo_handle 'classifier' \
+    --algo_handle 'simclr' \
     --no-linear_probe \
     --no-fine_tuning \
     --fc_hid_dim 128 \
@@ -25,5 +25,5 @@ python main.py \
     --data_path /hdd/datasets/BigEarthNet-v1.0 \
     --truncate_at 100 \
     --acc_grad_steps 8 \
-    --num_workers 4 #\
+    --num_workers 0 #\
     #--load_checkpoint ./weights/SimCLR_ResNet101_h128_o64/model_10epochs.tar
