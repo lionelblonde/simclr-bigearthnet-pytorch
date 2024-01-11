@@ -15,10 +15,6 @@ from algos.ssl.simclr import SimCLR
 
 def run(args):
 
-    # Solve issue with dataloader
-    os.environ["OMP_NUM_THREADS"] = "1"
-    os.environ["MKL_NUM_THREADS"] = "1"
-
     # Initialize and configure experiment
     experiment = ExperimentInitializer(args)
     experiment.configure_logging()
