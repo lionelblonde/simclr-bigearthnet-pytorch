@@ -160,7 +160,6 @@ class SimCLR(object):
                 t_metrics, t_loss = self.compute_loss(t_x_i, t_x_j)
                 t_loss /= self.hps.acc_grad_steps
 
-
             t_loss: Any = self.scaler.scale(t_loss)  # silly trick to bypass broken
             # torch.cuda.amp type hints (issue: https://github.com/pytorch/pytorch/issues/108629)
             t_loss.backward()
