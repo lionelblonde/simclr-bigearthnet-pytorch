@@ -32,23 +32,11 @@ Has proven finicky to install.
 
 Python version: >=3.10
 
-Set up your Python environment as follows (prefered way; Dockerfile provided too):
+Set up your Python environment as follows (ordering is important):
 ```bash
 pip install --upgrade pip
 conda install -c conda-forge gdal
-pip install rasterio opencv-python tqdm numpy scikit-learn wandb tmuxp tabulate
-```
-PyTorch __with__ GPU support (_preferred_):
-```bash
-conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
-```
-PyTorch __without__ GPU support:
-```bash
-conda install pytorch torchvision torchaudio cpuonly -c pytorch
-```
-
-Finally (keep this last), install lucidrains' vector quantization lib:
-```bash
-pip install vector-quantize-pytorch
+pip install rasterio opencv-python tqdm numpy scikit-learn wandb tmuxp tabulate pyright ruff-lsp
+pip install torch torchvision torchaudio
 ```
 
