@@ -358,7 +358,9 @@ class SimCLR(object):
                 t_metrics, t_loss, _ = self.compute_classifier_loss(t_x, t_true_y)
                 t_loss /= self.hps.acc_grad_steps
 
-            self.new_scaler.scale(t_loss).backward()
+            t_loss: Any = self.scaler.scale(t_loss)  # silly trick to bypass broken
+            # torch.cuda.amp type hints (issue: https://github.com/pytorch/pytorch/issues/108629)
+            t_loss.backward()
 
             if ((i + 1) % self.hps.acc_grad_steps == 0) or (i + 1 == len(train_dataloader)):
 
