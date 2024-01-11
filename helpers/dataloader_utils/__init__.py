@@ -1,12 +1,12 @@
 from pathlib import Path, PurePath
-from typing import List
+from typing import List, Union
 
 
 def path2str(path: Path) -> str:
     return str(path.resolve())
 
 
-def read_from_file(path: str, parent: str = "") -> List[str]:
+def read_from_file(path: Union[str, Path], parent: str = "") -> List[str]:
     content = []
     with Path(path).open("r") as f:
         content = f.readlines()

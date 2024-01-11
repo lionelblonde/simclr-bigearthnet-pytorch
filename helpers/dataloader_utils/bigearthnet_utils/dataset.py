@@ -45,7 +45,7 @@ class BigEarthNetDataset(Dataset):
 
         self.train_stage = train_stage
 
-        if num_transforms == 2 and self.train_stage:
+        if num_transforms == 2:
             self.data_augment_f = TransformsToolkit.transform_bigearthnet(image_size)
         else:
             self.data_augment_f = None
@@ -70,7 +70,7 @@ class BigEarthNetDataset(Dataset):
             )  # sanity check
 
         content = read_from_file(self.split_path, parent=data_path)
-        if self.train_stage:  # truncate if asked, but only in for the training set
+        if self.train_stage:  # truncate if asked, but only for the training set
             all_the_is = np.arange(0, len(content))
             self.is2keep = np.random.default_rng(seed).choice(
                 all_the_is,
@@ -80,7 +80,7 @@ class BigEarthNetDataset(Dataset):
             content = [Path(line) for i, line in enumerate(content) if i in self.is2keep]
         else:
             content = [Path(line) for line in content]  # keep everything for val and test
-        self.folder_path_list = np.array(content)
+        self.folder_path_list = content
 
         self.verify_bands(self.bands)
 
