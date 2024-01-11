@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import itertools
 from contextlib import nullcontext
-
+from typing import Any
 from tqdm import tqdm
 
 import wandb
@@ -50,9 +50,6 @@ class SimCLR(object):
         ).to(self.device)
 
         self.criterion = NTXentLoss(temperature=self.hps.ntx_temp).to(self.device)
-
-        self.sim = nn.CosineSimilarity(dim=2).to(self.device)
-        self.bce = nn.BCEWithLogitsLoss().to(self.device)
 
         if not self.hps.lars:  # if not set to use layerwise lr adaption
             self.opt = torch.optim.Adam(
@@ -141,7 +138,7 @@ class SimCLR(object):
         wandb.log(wandb_dict)
         logger.info(f"logged this to wandb: {wandb_dict}")
 
-    def train(self, train_dataloader, val_dataloader, knn_dataloader):
+    def train(self, train_dataloader, val_dataloader):
 
         agg_iterable = zip(
             tqdm(train_dataloader),
@@ -149,7 +146,7 @@ class SimCLR(object):
             strict=False,
         )
 
-        for i, ((t_x, _), (v_x, v_true_y)) in enumerate(agg_iterable):
+        for i, ((t_x, _), (v_x, _)) in enumerate(agg_iterable):
 
             t_x_i, t_x_j = [e.squeeze() for e in torch.tensor_split(t_x, 2, dim=1)]  # unpack
 
@@ -163,7 +160,10 @@ class SimCLR(object):
                 t_metrics, t_loss = self.compute_loss(t_x_i, t_x_j)
                 t_loss /= self.hps.acc_grad_steps
 
-            self.scaler.scale(t_loss).backward()
+
+            t_loss: Any = self.scaler.scale(t_loss)  # silly trick to bypass broken
+            # torch.cuda.amp type hints (issue: https://github.com/pytorch/pytorch/issues/108629)
+            t_loss.backward()
 
             if ((i + 1) % self.hps.acc_grad_steps == 0) or (i + 1 == len(train_dataloader)):
 
@@ -184,58 +184,16 @@ class SimCLR(object):
 
                 with torch.no_grad():
 
-                    z_bank = []
-                    y_bank = []
-
-                    logger.info("building bank")
-                    num_classes = 0  # to prevent unboundedness
-                    for j, (k_x, k_true_y) in enumerate(knn_dataloader):
-                        if j >= 10:
-                            num_classes = k_true_y.size(-1)  # using the last label loaded
-                            break  # takes too long otherwise; shuffle is on
-                        if self.hps.cuda:
-                            k_x = k_x.pin_memory().to(self.device, non_blocking=True)
-                        else:
-                            k_x = k_x.to(self.device)
-                        with self.ctx:
-                            k_z = self.model.mono_forward(k_x)
-                        z_bank.append(k_z)
-                        y_bank.append(k_true_y)
-                    logger.info("bank built")
-                    z_bank = torch.cat(z_bank, dim=0).to(self.device)  # size: (NxD)
-                    y_bank = torch.cat(y_bank, dim=0).to(self.device)  # size: (NxC)
+                    v_x_i, v_x_j = [e.squeeze() for e in torch.tensor_split(v_x, 2, dim=1)]
 
                     if self.hps.cuda:
-                        v_x = v_x.pin_memory().to(self.device, non_blocking=True)
-                        v_true_y = v_true_y.pin_memory().to(self.device, non_blocking=True)
+                        v_x_i = v_x_i.pin_memory().to(self.device, non_blocking=True)
+                        v_x_j = v_x_j.pin_memory().to(self.device, non_blocking=True)
                     else:
-                        v_x, v_true_y = v_x.to(self.device), v_true_y.to(self.device)
+                        v_x_i, v_x_j = v_x_i.to(self.device), v_x_j.to(self.device)
 
                     with self.ctx:
-
-                        v_z = self.model.mono_forward(v_x)  # size: (BxD)
-
-                        sim = self.sim(v_z.unsqueeze(1), z_bank.unsqueeze(0)) / 0.25  # temperature
-                        # sizes: (BxD), (NxD) -> (BxN) with the sim reduction along dim 2
-
-                        sim_weights, sim_indices = sim.topk(k=50, dim=-1)
-                        # only keep k closest images
-                        # size: (BxK) by keeping only a subset of the N's
-
-                        # look for the labels of the k closest images
-                        sim_y = torch.gather(
-                            y_bank.unsqueeze(0).repeat(self.hps.batch_size, 1, 1),
-                            dim=1,
-                            index=sim_indices.unsqueeze(-1).repeat(1, 1, num_classes),
-                        )
-                        # size: (BxKxC) by selecting the K indices
-                        # within dim 1 of the expansion size: (BxNxC)
-
-                        sim_weighted_y = (sim_y * sim_weights.exp().unsqueeze(-1)).sum(dim=1)
-
-                        v_loss = self.bce(sim_weighted_y, v_true_y)
-
-                        v_metrics = {'loss': v_loss.item()}
+                        v_metrics, _ = self.compute_loss(v_x_i, v_x_j)
 
                     self.send_to_dash(v_metrics, step_metric=self.iters_so_far, glob='val')
                     del v_metrics
@@ -248,65 +206,23 @@ class SimCLR(object):
             self.sched.step()
         self.epochs_so_far += 1
 
-    def test(self, test_dataloader, knn_dataloader):
+    def test(self, test_dataloader):
         self.model.eval()
 
         with torch.no_grad():
 
-            z_bank = []
-            y_bank = []
+            for i, (x, _) in enumerate(tqdm(test_dataloader)):
 
-            logger.info("building bank")  # compared to val, only need to build once
-            num_classes = 0  # to prevent unboundedness
-            for j, (k_x, k_true_y) in enumerate(knn_dataloader):
-                if j >= 10:
-                    num_classes = k_true_y.size(-1)  # using the last label loaded
-                    break  # takes too long otherwise; shuffle is on
-                if self.hps.cuda:
-                    k_x = k_x.pin_memory().to(self.device, non_blocking=True)
-                else:
-                    k_x = k_x.to(self.device)
-                with self.ctx:
-                    k_z = self.model.mono_forward(k_x)
-                z_bank.append(k_z)
-                y_bank.append(k_true_y)
-            logger.info("bank built")
-            z_bank = torch.cat(z_bank, dim=0).to(self.device)  # size: (NxD)
-            y_bank = torch.cat(y_bank, dim=0).to(self.device)  # size: (NxC)
-
-            for i, (x, true_y) in enumerate(tqdm(test_dataloader)):
+                x_i, x_j = [e.squeeze() for e in torch.tensor_split(x, 2, dim=1)]
 
                 if self.hps.cuda:
-                    x = x.pin_memory().to(self.device, non_blocking=True)
-                    true_y = true_y.pin_memory().to(self.device, non_blocking=True)
+                    x_i = x_i.pin_memory().to(self.device, non_blocking=True)
+                    x_j = x_j.pin_memory().to(self.device, non_blocking=True)
                 else:
-                    x, true_y = x.to(self.device), true_y.to(self.device)
+                    x_i, x_j = x_i.to(self.device), x_j.to(self.device)
 
                 with self.ctx:
-
-                    z = self.model.mono_forward(x)  # size: (BxD)
-
-                    sim = self.sim(z.unsqueeze(1), z_bank.unsqueeze(0)) / 0.25  # temperature
-                    # sizes: (BxD), (NxD) -> (BxN) with the sim reduction along dim 2
-
-                    sim_weights, sim_indices = sim.topk(k=50, dim=-1)
-                    # only keep k closest images
-                    # size: (BxK) by keeping only a subset of the N's
-
-                    # look for the labels of the k closest images
-                    sim_y = torch.gather(
-                        y_bank.unsqueeze(0).repeat(self.hps.batch_size, 1, 1),
-                        dim=1,
-                        index=sim_indices.unsqueeze(-1).repeat(1, 1, num_classes),
-                    )
-                    # size: (BxKxC) by selecting the K indices
-                    # within dim 1 of the expansion size: (BxNxC)
-
-                    sim_weighted_y = (sim_y * sim_weights.exp().unsqueeze(-1)).sum(dim=1)
-
-                    loss = self.bce(sim_weighted_y, true_y)
-
-                    metrics = {'loss': loss.item()}
+                    metrics, _ = self.compute_loss(x_i, x_j)
 
                 self.send_to_dash(metrics, step_metric=i, glob='test')
                 del metrics

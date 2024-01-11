@@ -33,6 +33,3 @@ class SimCLRModel(nn.Module):
         z_j = self.head(self.backbone(x_j))
         return z_i, z_j
 
-    def mono_forward(self, x):
-        z = self.head(self.backbone(x))
-        return z

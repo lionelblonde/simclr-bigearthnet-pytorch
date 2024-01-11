@@ -26,7 +26,6 @@ def learn(
     experiment_name,
     num_transforms,
     with_labels,
-    knn_eval,
 ):
 
     # Create context manager that records the time taken by encapsulated ops
@@ -58,11 +57,6 @@ def learn(
         dataloaders.append(get_dataloader(
             **tmpdict, split_path=paths_list[2],
         ))
-
-        if knn_eval:
-            dataloaders.append(get_dataloader(
-                **tmpdict, split_path=paths_list[0], shuffle=True,
-            ))
 
         for i, e in enumerate(dataloaders):
             # Log stats about the dataloaders
@@ -170,10 +164,7 @@ def learn(
 
         log_epoch_info(logger, algo.epochs_so_far, args.epochs, tstart)
 
-        if knn_eval:
-            algo.train(dataloaders[0], dataloaders[1], dataloaders[3])  # [2] is test
-        else:
-            algo.train(dataloaders[0], dataloaders[1])
+        algo.train(dataloaders[0], dataloaders[1])
 
         if algo.epochs_so_far % args.save_freq == 0:
             algo.save_to_path(ckpt_dir)
