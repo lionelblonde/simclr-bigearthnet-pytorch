@@ -200,8 +200,6 @@ class BigEarthNetDataset(Dataset):
 
                     bands_data.append(band_data)
 
-                band_file.close()
-
             bands_data = np.stack(bands_data)
 
             data.append(bands_data)
