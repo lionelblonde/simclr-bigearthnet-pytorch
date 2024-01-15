@@ -187,7 +187,7 @@ class BigEarthNetDataset(Dataset):
             for band_name in bands:
                 band_path = path.joinpath(f"{name}_{band_name}.tif")
                 with rasterio.open(band_path, driver="GTiff", sharing=False) as band_file:
-                    band_data = band_file.read(1)  # open the tif image as a numpy array
+                    band_data = band_file.read(1)  # open the tiff image as a numpy array
                     # Resize depending on the resolution
                     if band_name in BANDS_20M:
                         # Carry out a bicubic interpolation (TUB does exactly this)
