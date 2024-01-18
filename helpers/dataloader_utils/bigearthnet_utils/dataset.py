@@ -217,7 +217,6 @@ class BigEarthNetDataset(Dataset):
     def __getitem__(
         self, index: int, bands: Optional[List[str]] = None
     ) -> Union[Tuple[Union[torch.Tensor, List[torch.Tensor]], torch.Tensor], Union[torch.Tensor, List[torch.Tensor]]]:
-        assert isinstance(index, int), "index must be int"
 
         if self.memory:
             data = torch.Tensor(self.data[index])
