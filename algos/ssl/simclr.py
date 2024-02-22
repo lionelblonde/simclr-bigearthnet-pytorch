@@ -410,7 +410,6 @@ class SimCLR(object):
         self.metrics.reset()
         self.epochs_so_far += 1
 
-
     def ftop_test(self, dataloader):
         # the code that follows is identical whether we fine-tune or just train the probe
         # because the only thing that changes between the two is the new optimizer (cf. above)
