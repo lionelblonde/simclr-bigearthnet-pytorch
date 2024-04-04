@@ -2,6 +2,7 @@ import os
 
 from pathlib import Path
 
+import numpy as np
 import torch
 from torch.backends import cudnn as cudnn
 
@@ -14,6 +15,9 @@ from algos.ssl.simclr import SimCLR
 
 
 def run(args):
+
+    # Set printing options
+    np.set_printoptions(precision=3)
 
     # Initialize and configure experiment
     experiment = ExperimentInitializer(args)
@@ -88,3 +92,4 @@ if __name__ == '__main__':
         vars(_args)[new_k] = Path(_args.root) / 'data' / k
 
     run(_args)
+

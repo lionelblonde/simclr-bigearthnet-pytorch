@@ -2,7 +2,6 @@ import random
 from pathlib import Path
 import subprocess
 
-import numpy as np
 import yaml
 
 from helpers import logger
@@ -35,7 +34,7 @@ class ConfigDumper:
     def dump(self):
         hpmap = self.args.__dict__
         path = Path(self.path) / 'hyperparameters.yml'
-        path.write_text(yaml.dump(hpmap, default_flow_style=False))  # sanity check: print(path.read_text())
+        path.write_text(yaml.dump(hpmap, default_flow_style=False))
 
 
 class ExperimentInitializer:
@@ -45,8 +44,6 @@ class ExperimentInitializer:
         self.uuid_provided = (args.uuid is not None)
         self.uuid = args.uuid if self.uuid_provided else uuid()
         self.args = args
-        # Set printing options
-        np.set_printoptions(precision=3)
 
     def configure_logging(self, train=True):
         """Configure the experiment"""

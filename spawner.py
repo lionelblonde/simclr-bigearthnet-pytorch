@@ -1,5 +1,5 @@
 import argparse
-
+import itertools
 from copy import deepcopy
 import os
 import sys
@@ -316,8 +316,7 @@ def run(args):
     names = [f"{spawner.type}.{hpmap['uuid']}" for _, hpmap in enumerate(hpmaps)]
 
     # Finally get all the required job strings
-    jobs = [spawner.create_job_str(name, command)
-            for name, command in zipsame(names, commands)]
+    jobs = itertools.starmap(spawner.create_job_str, zipsame(names, commands))
 
     # Spawn the jobs
     for i, (name, job) in enumerate(zipsame(names, jobs)):
