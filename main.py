@@ -92,4 +92,3 @@ if __name__ == '__main__':
         vars(_args)[new_k] = Path(_args.root) / 'data' / k
 
     run(_args)
-
